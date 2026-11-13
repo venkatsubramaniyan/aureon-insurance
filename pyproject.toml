@@ -2,10 +2,18 @@
 name = "aureon-insurance"
 version = "0.1.0"
 requires-python = ">=3.13, <3.14"
-dependencies = []
+dependencies = [
+    "fastapi>=0.162.5",
+    "uvicorn[standard]>=0.54.0",
+]
 
 [dependency-groups]
 dev = [
+    "httpx>=0.28.1",
     "pytest>=9.2.0",
     "ruff>=0.17.5",
 ]
+
+[tool.pytest.ini_options]
+pythonpath = ["services/api"]
+testpaths = ["tests"]
