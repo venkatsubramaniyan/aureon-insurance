@@ -11,7 +11,11 @@ permissions:
 jobs:
   verify-azure-login:
     name: Verify Azure OIDC Authentication
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - Linux
+      - X64
+      - aureon-terraform-dev
     environment: dev
 
     env:
