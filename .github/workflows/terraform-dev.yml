@@ -1,4 +1,3 @@
-
 name: Aureon Terraform Dev - Azure OIDC Test
 
 on:
@@ -10,15 +9,21 @@ permissions:
 
 jobs:
   verify-azure-login:
-    name: Verify Azure OIDC Authentication
+    name: Verify Azure OIDC and Terraform Init
+
     runs-on:
       - self-hosted
       - Linux
       - X64
       - aureon-terraform-dev
+
     environment: dev
 
     env:
+      ARM_USE_OIDC: "true"
+      ARM_USE_AZUREAD: "true"
+      ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+      ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
       ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
     steps:
@@ -37,3 +42,12 @@ jobs:
           az account show \
             --query "{subscription:name, subscriptionId:id, tenantId:tenantId}" \
             --output json
+
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.16.5"
+
+      - name: Terraform Init
+        working-directory: infra/terraform/environments/dev
+        run: terraform init -input=false -no-color
