@@ -1,4 +1,4 @@
-name: Aureon Terraform Dev - Plan Batch 3
+name: Aureon Terraform Dev - OIDC, Validate & Plan
 
 on:
   workflow_dispatch:

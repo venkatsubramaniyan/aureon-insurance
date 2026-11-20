@@ -1,4 +1,4 @@
-name: Aureon Terraform Dev - Apply Batch 3
+name: Aureon Terraform Dev - Apply
 
 on:
   workflow_dispatch:
