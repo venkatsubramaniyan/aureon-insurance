@@ -52,3 +52,11 @@ jobs:
       - name: Terraform Init
         working-directory: infra/terraform/environments/dev
         run: terraform init -input=false -no-color
+
+      - name: Terraform Validate
+        working-directory: infra/terraform/environments/dev
+        run: terraform validate -no-color
+
+      - name: Terraform Plan
+        working-directory: infra/terraform/environments/dev
+        run: terraform plan -input=false -no-color
