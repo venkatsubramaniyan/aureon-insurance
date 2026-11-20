@@ -28,6 +28,21 @@ run "secure_storage_plan" {
 
   assert {
     condition = (
+      length(azurerm_cognitive_account.openai) == 0 &&
+      length(azurerm_postgresql_flexible_server.app) == 0 &&
+      length(azurerm_managed_redis.api_cache) == 0 &&
+      length(azurerm_container_registry.workloads) == 0 &&
+      length(azurerm_container_app_environment.workloads) == 0 &&
+      length(azurerm_container_app.workloads) == 0 &&
+      length(azurerm_static_web_app.chatbot) == 0 &&
+      length(azurerm_log_analytics_workspace.workloads) == 0 &&
+      length(data.azurerm_virtual_network.workloads) == 0
+    )
+    error_message = "Batches 3-7 must remain opt-in with no additional VNet lookup by default."
+  }
+
+  assert {
+    condition = (
       azurerm_storage_account.app_storage.name == "staureonappdev001" &&
       azurerm_storage_account.app_storage.public_network_access_enabled == false &&
       azurerm_storage_account.app_storage.shared_access_key_enabled == false &&
@@ -81,12 +96,12 @@ run "eventgrid_dead_letters" {
     condition = (
       azurerm_storage_container.eventgrid_dead_letters.name == "eventgrid-deadletters" &&
       azurerm_storage_container.eventgrid_dead_letters.container_access_type == "private" &&
-      azurerm_role_assignment.eventgrid_dead_letter_writer.scope == azurerm_storage_container.eventgrid_dead_letters.id &&
+      azurerm_role_assignment.eventgrid_dead_letter_writer.scope == azurerm_storage_account.app_storage.id &&
       azurerm_role_assignment.eventgrid_dead_letter_writer.role_definition_name == "Storage Blob Data Contributor" &&
       azurerm_eventgrid_system_topic_event_subscription.insurance_document_created.dead_letter_identity[0].type == "SystemAssigned" &&
       azurerm_eventgrid_system_topic_event_subscription.insurance_document_created.storage_blob_dead_letter_destination[0].storage_account_id == azurerm_storage_account.app_storage.id &&
       azurerm_eventgrid_system_topic_event_subscription.insurance_document_created.storage_blob_dead_letter_destination[0].storage_blob_container_name == azurerm_storage_container.eventgrid_dead_letters.name
     )
-    error_message = "Event Grid dead-lettering must use a private, container-scoped managed-identity destination."
+    error_message = "Event Grid must use managed identity with the existing account-scoped grant and private dead-letter container."
   }
 }

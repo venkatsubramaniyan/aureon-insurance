@@ -41,6 +41,13 @@ Understand → Implement → Verify → Review → Commit
 
 Each component is implemented incrementally with an emphasis on security, reliability, testing, and maintainability.
 
+## Dev infrastructure: Batches 3–7
+
+The [deployment guide](docs/batches-3-7-deployment.md) describes the opt-in
+AI, data, hosting, frontend and monitoring configuration, approval gates
+and rollout order. See [ADR 0002](docs/adr/0002-private-azure-workloads.md)
+for the private hosting and frontend integration decisions.
+
 ## Dev document storage
 
 The dev Terraform configuration manages the existing `staureonappdev001`
@@ -131,9 +138,10 @@ Event Grid retries delivery for up to 30 attempts or 24 hours, whichever is
 reached first; some errors, including 403, are not retried. Undelivered events
 are configured to be dead-lettered to the private `eventgrid-deadletters`
 container in the existing application account. The system topic's
-system-assigned identity is granted **Storage Blob Data Contributor** at that
-container's ARM scope. This built-in role also permits blob deletion; it
-does not grant access to the document container. Dead-letter blob subjects
+system-assigned identity has the existing **Storage Blob Data Contributor**
+grant at the application storage account's ARM scope. This built-in role also
+permits blob deletion and covers the document container; the destination
+itself remains the dedicated dead-letter container. Dead-letter blob subjects
 do not match the document subscription's prefix.
 
 Event Grid push delivery does not use the account's private endpoint. It uses
@@ -199,7 +207,7 @@ assignment is provisioned in this batch.
   `Microsoft.EventGrid/EventSubscriptions/Write` at the source storage
   account; write access to the destination queue; and
   `Microsoft.Authorization/roleAssignments/write`, read and delete at the
-  queue and dead-letter container scopes to manage the sender and blob-writer
+  queue and application storage account scopes to manage the sender and blob-writer
   grants. It also needs ARM container read/write/delete permissions to manage
   the dead-letter container. Check existing inherited grants before
   requesting additional permissions. Provider registration requires separate
