@@ -60,3 +60,5 @@ jobs:
       - name: Terraform Plan
         working-directory: infra/terraform/environments/dev
         run: terraform plan -input=false -no-color
+
+   
