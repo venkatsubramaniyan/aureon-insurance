@@ -42,4 +42,5 @@ Thumbs.db
 *.tfstate.*
 *.tfvars
 !*.tfvars.example
+!/infra/terraform/environments/dev/batch3.workflow.tfvars
 crash.log

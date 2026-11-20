@@ -85,9 +85,8 @@ Before deploying:
    private DNS resolution, and connectivity from every actual client network.
    Review a fresh full plan before applying the public-network and shared-key
    lockdown. Terraform ordering alone does not verify client connectivity.
-   The existing apply workflow uses `-auto-approve` and creates its own plan;
-   do not dispatch it until the cutover is approved, and use a reviewed saved
-   plan if approval of the exact changes is required.
+   The [Dev Batch 3 workflow](docs/batches-3-7-deployment.md#manual-dev-batch-3-rollout)
+   does not apply storage cutover changes.
 5. Inventory clients using account keys, account/service SAS, or public
    endpoints and migrate them before lockdown. Public access is disabled for
    the entire account, but only a Blob private endpoint is configured; Queue,
@@ -225,8 +224,8 @@ assignment is provisioned in this batch.
   container and two role assignments, and separately inspect any pending
   Batch 1 changes. Stop
   for any unexpected replacement of storage, container, network or backend
-  resources. The existing apply workflow uses `-auto-approve`; it does not
-  apply a previously reviewed saved plan.
+  resources. The [Dev Batch 3 workflow](docs/batches-3-7-deployment.md#manual-dev-batch-3-rollout)
+  does not apply messaging changes.
 
 References: [Event Grid managed-identity delivery](https://learn.microsoft.com/en-us/azure/event-grid/deliver-events-using-managed-identity),
 [delivery and retry](https://learn.microsoft.com/en-us/azure/event-grid/delivery-and-retry),

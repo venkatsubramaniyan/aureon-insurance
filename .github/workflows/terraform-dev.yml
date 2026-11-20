@@ -1,4 +1,4 @@
-name: Aureon Terraform Dev - Azure OIDC Test
+name: Aureon Terraform Dev - Plan Batch 3
 
 on:
   workflow_dispatch:
@@ -7,9 +7,14 @@ permissions:
   id-token: write
   contents: read
 
+concurrency:
+  group: aureon-terraform-dev-state
+  cancel-in-progress: false
+
 jobs:
-  verify-azure-login:
-    name: Verify Azure OIDC and Terraform Init
+  terraform-plan:
+    name: Plan Dev Batch 3
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
 
     runs-on:
       - self-hosted
@@ -29,6 +34,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Login to Azure using OIDC
         uses: azure/login@v2
@@ -51,14 +58,22 @@ jobs:
 
       - name: Terraform Init
         working-directory: infra/terraform/environments/dev
-        run: terraform init -input=false -no-color
+        run: terraform init -input=false -no-color -lockfile=readonly
 
       - name: Terraform Validate
         working-directory: infra/terraform/environments/dev
-        run: terraform validate -no-color
+        run: terraform validate -no-color -var-file=batch3.workflow.tfvars
 
       - name: Terraform Plan
         working-directory: infra/terraform/environments/dev
-        run: terraform plan -input=false -no-color
-
-   
+        shell: bash
+        run: |
+          command -v python3 >/dev/null || { echo "python3 is required on the Dev runner"; exit 1; }
+          umask 077
+          plan_dir="$(mktemp -d "$RUNNER_TEMP/aureon-batch3-plan.XXXXXX")"
+          trap 'rm -f -- "$plan_dir/batch3.tfplan"; rmdir -- "$plan_dir"' EXIT
+          terraform plan -input=false -no-color -lock-timeout=5m \
+            -var-file=batch3.workflow.tfvars -out="$plan_dir/batch3.tfplan"
+          terraform show -json "$plan_dir/batch3.tfplan" \
+            | python3 "$GITHUB_WORKSPACE/.github/scripts/check-batch3-plan.py"
+          printf 'Review this Batch 3 plan for commit `%s`.\n' "$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"

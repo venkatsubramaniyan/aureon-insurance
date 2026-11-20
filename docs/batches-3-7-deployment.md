@@ -6,8 +6,8 @@ not deployable defaults. Once an input has been applied, do not reset it to
 `null`, remove an image key, or turn off `deploy_workloads` as a pause
 mechanism: Terraform can plan deletions. Use a reviewed full plan for each
 group, not routine `-target`. Stop on unexpected change to any existing
-resource, deletion or replacement. The existing apply workflow auto-approves
-and does not consume a reviewed saved plan; do not dispatch it for this work.
+resource, deletion or replacement. The Dev workflows described below are
+restricted to Batch 3; they are not a deployment mechanism for Batches 4–7.
 
 ## What each group adds
 
@@ -24,6 +24,41 @@ with approved regions/SKUs. Separate the fixed monthly floor (roughly 730
 hours of always-on meters, registry/site base charge, private endpoints, DNS
 zones) from requests, tokens, throughput, telemetry, retention and egress.
 No subscription-specific dollar estimate is represented by the mock inputs.
+
+### Manual Dev Batch 3 rollout
+
+Both workflows explicitly select the non-secret
+[`batch3.workflow.tfvars`](../infra/terraform/environments/dev/batch3.workflow.tfvars)
+from the checked-out commit. It disables Batches 4–7. The earlier local
+`batch3.dev.tfvars` remains ignored and is not used by CI. Neither workflow
+runs on push, and both are restricted to the default branch.
+
+1. Manually run **Aureon Terraform Dev - Plan Batch 3** on the default branch.
+   Review the full plan and copy the commit SHA shown in the run summary.
+   Stop if the guard rejects the plan; do not use `-target` to bypass it.
+2. Manually run **Aureon Terraform Dev - Apply Batch 3** and provide that
+   SHA as `reviewed_commit`. If the branch advanced, review a new plan.
+   Apply independently generates and checks a fresh full plan, then applies
+   that saved file without replanning. The SHA check ties the runs to the
+   same configuration; it is an operator attestation, not proof of a prior
+   review or approval of the exact earlier plan. Live state can change
+   between runs.
+3. Keep the default branch protected, restrict the `dev` environment to
+   trusted refs, and configure required reviewers where available. The same
+   environment applies to both workflows. The shared concurrency group
+   prevents simultaneous Dev workflow runs and the existing Terraform
+   backend still provides state locking. The Linux runner needs `python3`.
+   Binary plans may contain sensitive state: they are kept in a restricted
+   runner temp directory, not uploaded, and removed on normal shell exit.
+   Restrict runner and workflow-log access; a forced runner stop can leave
+   temporary files.
+
+The deployment names are `chat` (GPT‑5.4 mini, US Data Zone Standard) and
+`embeddings` (text-embedding-3-large, regional Standard), both with capacity
+`10`. The empty DNS map requests new private zones and links; substitute
+verified existing linked zone IDs if applicable. When defining the Search
+index, use the same vector dimensions for the index, ingestion and query
+embeddings; the large model returns 3,072 dimensions by default.
 
 ## Review and deployment order
 
