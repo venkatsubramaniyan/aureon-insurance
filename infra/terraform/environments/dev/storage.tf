@@ -14,3 +14,9 @@ resource "azurerm_storage_account" "app_storage" {
     environment = "dev"
   }
 }
+
+resource "azurerm_storage_container" "insurance_documents" {
+  name                  = "insurance-documents"
+  storage_account_id    = azurerm_storage_account.app_storage.id
+  container_access_type = "private"
+}
