@@ -4,6 +4,7 @@ mock_provider "azurerm" {
     values = {
       subscription_id = "00000000-0000-0000-0000-000000000000"
     }
+
   }
 
   override_data {
@@ -11,6 +12,7 @@ mock_provider "azurerm" {
     values = {
       id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-aureon-dev-eastus/providers/Microsoft.Network/virtualNetworks/vnet-aureon-dev-eastus/subnets/snet-aureon-private-endpoints-dev"
     }
+
   }
 
   override_data {
@@ -53,5 +55,38 @@ run "secure_storage_plan" {
       contains(azurerm_private_endpoint.app_storage_blob.private_dns_zone_group[0].private_dns_zone_ids, data.azurerm_private_dns_zone.blob.id)
     )
     error_message = "The endpoint must connect the existing account's Blob service to the existing subnet and DNS zone."
+  }
+}
+
+run "eventgrid_dead_letters" {
+  command = plan
+
+  override_resource {
+    target          = azurerm_storage_account.app_storage
+    override_during = plan
+    values = {
+      id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-aureon-dev-eastus/providers/Microsoft.Storage/storageAccounts/staureonappdev001"
+    }
+  }
+
+  override_resource {
+    target          = azurerm_storage_container.eventgrid_dead_letters
+    override_during = plan
+    values = {
+      id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-aureon-dev-eastus/providers/Microsoft.Storage/storageAccounts/staureonappdev001/blobServices/default/containers/eventgrid-deadletters"
+    }
+  }
+
+  assert {
+    condition = (
+      azurerm_storage_container.eventgrid_dead_letters.name == "eventgrid-deadletters" &&
+      azurerm_storage_container.eventgrid_dead_letters.container_access_type == "private" &&
+      azurerm_role_assignment.eventgrid_dead_letter_writer.scope == azurerm_storage_container.eventgrid_dead_letters.id &&
+      azurerm_role_assignment.eventgrid_dead_letter_writer.role_definition_name == "Storage Blob Data Contributor" &&
+      azurerm_eventgrid_system_topic_event_subscription.insurance_document_created.dead_letter_identity[0].type == "SystemAssigned" &&
+      azurerm_eventgrid_system_topic_event_subscription.insurance_document_created.storage_blob_dead_letter_destination[0].storage_account_id == azurerm_storage_account.app_storage.id &&
+      azurerm_eventgrid_system_topic_event_subscription.insurance_document_created.storage_blob_dead_letter_destination[0].storage_blob_container_name == azurerm_storage_container.eventgrid_dead_letters.name
+    )
+    error_message = "Event Grid dead-lettering must use a private, container-scoped managed-identity destination."
   }
 }
