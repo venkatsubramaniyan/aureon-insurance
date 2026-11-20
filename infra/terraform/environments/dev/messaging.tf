@@ -58,7 +58,7 @@ resource "azurerm_storage_container" "eventgrid_dead_letters" {
 }
 
 resource "azurerm_role_assignment" "eventgrid_dead_letter_writer" {
-  scope                = azurerm_storage_container.eventgrid_dead_letters.id
+  scope = azurerm_storage_account.app_storage.id
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = azurerm_eventgrid_system_topic.app_storage.identity[0].principal_id
   principal_type       = "ServicePrincipal"
