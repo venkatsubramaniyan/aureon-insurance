@@ -36,6 +36,12 @@ runs on push, and both are restricted to the default branch.
 1. Manually run **Aureon Terraform Dev - Plan Batch 3** on the default branch.
    Review the full plan and copy the commit SHA shown in the run summary.
    Stop if the guard rejects the plan; do not use `-target` to bypass it.
+   The guard compares refresh drift separately from planned actions. It warns
+   for the existing document Event Grid subscription only when Terraform
+   plans no action and the only refresh differences are unset versus empty
+   labels or unset versus disabled array filtering. Other drift outside
+   Batch 3 blocks the run. The guard reports field names, not values; inspect
+   a fresh plan in a trusted environment before classifying new differences.
 2. Manually run **Aureon Terraform Dev - Apply Batch 3** and provide that
    SHA as `reviewed_commit`. If the branch advanced, review a new plan.
    Apply independently generates and checks a fresh full plan, then applies
